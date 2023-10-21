@@ -4,6 +4,7 @@ import os
 
 telegraph = Telegraph()                                             # Инициализация модуля телеграф / Initialization of the Telegraph module
 
+
 telegraph.create_account(short_name="TIUM_0.1")                     # Создание аккаунта телеграф для работы с ним / Creating a telegraph account to work with it
 
 dr = input("Введите дерикторию : ")                                 # Указание дириктории страниц манги / Specifying the directory of manga pages
