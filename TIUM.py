@@ -101,12 +101,12 @@ class App:
                 to+=1
                 self.pb.step()
                 self.pb.update()
-                response = self.telegraph.create_page(
-                    title = self.name.get(),
-                    author_name=autor,
-                    author_url=url,
-                    html_content=content
-                )
+            response = self.telegraph.create_page(
+                title = self.name.get(),
+                author_name=autor,
+                author_url=url,
+                html_content=content
+            )
             res = response['url']
             response = StringVar()
             response.set(str(res))
