@@ -7,21 +7,24 @@ from tkinter import filedialog
 from tkinter import messagebox as mb
 from customtkinter import *
 import tempfile, base64, zlib
+
+
 ICON = zlib.decompress(base64.b64decode("eJxjYGAEQgEBBiDJwZDBysAgxsDAoAHEQCEGBQaIOAg4sDIgACMUj4JRMApGwQgF/ykEAFXxQRc="))
- 
 _, ICON_PATH = tempfile.mkstemp()
 with open(ICON_PATH, "wb") as icon_file:
     icon_file.write(ICON)
 
 telegraph = Telegraph(access_token='021fbed97fd37d1f1a1e723801ec4e17c11a4c83997a153730330847a478')
+
 set_appearance_mode("system")
 app = CTk()
 app.title("Окно загрузчика")
-app.geometry("600x500+400+200")
-app.resizable(False,False)
+app.geometry("370x400+400+200")
+#app.resizable(False,False)
 app.iconbitmap(default=ICON_PATH)
 
-color = "#e07d25"
+color1 = "#e07d25"
+color2 = "#ad601c"
 
 def run():
     app.mainloop()
@@ -106,7 +109,7 @@ frame2.pack(side=TOP, pady=(0,20))
 frame2.configure(fg_color="transparent")
 
 
-b1 = CTkButton(master=frame2, text="Обзор", width=70, command=folder, fg_color=(color, color) )
+b1 = CTkButton(master=frame2, text="Обзор", width=70, command=folder, fg_color=(color1, color1), hover_color=(color2, color2) )
 b1.pack(side=RIGHT)
 
 e2 = CTkEntry(master=frame2, width=2000, placeholder_text="Разположение файлов*")
@@ -122,10 +125,10 @@ e3.pack(side=TOP, fill=X, pady=(0,20))
 e4 = CTkEntry(master=frame3, width=100, placeholder_text='Ссылка автора (вид: "http://" или "https://")')
 e4.pack(side=TOP, fill=X, pady=(0,20))
 
-b2 = CTkButton(master=frame1, text="Загрузить статью", command=noemty, fg_color=(color, color))
+b2 = CTkButton(master=frame1, text="Загрузить статью", command=noemty, fg_color=(color1, color1), hover_color=(color2, color2))
 b2.pack(side=TOP)
 
-pb = CTkProgressBar(master=frame1, orientation='horizontal', mode="determinate", progress_color=(color, color))
+pb = CTkProgressBar(master=frame1, orientation='horizontal', mode="determinate", progress_color=(color1, color1))
 pb.pack(side=TOP, pady=(30,0), fill=X)
 pb.set(0)
 
