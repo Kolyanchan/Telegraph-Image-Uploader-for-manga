@@ -7,135 +7,154 @@ from tkinter import filedialog
 from tkinter import messagebox as mb
 from customtkinter import *
 import tempfile, base64, zlib
+from threading import Thread, Lock
+import time
 
+class App:
+    def __init__(self):
+        
+        self.telegraph = Telegraph(access_token="021fbed97fd37d1f1a1e723801ec4e17c11a4c83997a153730330847a478")
 
-ICON = zlib.decompress(base64.b64decode("eJxjYGAEQgEBBiDJwZDBysAgxsDAoAHEQCEGBQaIOAg4sDIgACMUj4JRMApGwQgF/ykEAFXxQRc="))
-_, ICON_PATH = tempfile.mkstemp()
-with open(ICON_PATH, "wb") as icon_file:
-    icon_file.write(ICON)
+        set_appearance_mode("system")
+        self.root = CTk()
+        self.root.title("Окно загрузчика")
+        self.root.geometry("370x420+400+200")
+        self.root.resizable(False,False)
+        self.root.iconbitmap(self.nonicon())
 
-telegraph = Telegraph(access_token='021fbed97fd37d1f1a1e723801ec4e17c11a4c83997a153730330847a478')
+        color1 = "#e07d25"
+        color2 = "#ad601c"
+        self.fg_color  = (color1, color1)
+        self.hover_color  = (color2, color2)
 
-set_appearance_mode("system")
-app = CTk()
-app.title("Окно загрузчика")
-app.geometry("370x400+400+200")
-#app.resizable(False,False)
-app.iconbitmap(default=ICON_PATH)
+        self.title = 'Поле "Название статьи" не может быть пустым'
+        self.file = 'Неверное расположение файлов'
+        self.file_emty = 'В папке отсутствуют изображения'
 
-color1 = "#e07d25"
-color2 = "#ad601c"
+        self.top = CTkFrame(master=self.root, height=50, fg_color="transparent")
+        self.input = CTkFrame(master=self.root, height=200, fg_color="transparent")
+        self.setings = CTkFrame(master=self.root, height=50, fg_color="transparent")
+        self.inputplus = CTkFrame(master=self.input, fg_color="transparent")
+        
+        self.name = CTkEntry(master=self.input, width=100, placeholder_text="Название статьи*")
+        self.path = CTkEntry(master=self.inputplus, width=2000, placeholder_text="Разположение файлов*")
+        self.autor = CTkEntry(master=self.input, placeholder_text="Автор")
+        self.url_autor = CTkEntry(master=self.input, placeholder_text='Ссылка автора (вид: "http://" или "https://")')
 
-def run():
-    app.mainloop()
+        self.view = CTkButton(master=self.inputplus, text="Обзор", command=self.folder, width=70, fg_color=self.fg_color, hover_color=self.hover_color)
+        self.upload = CTkButton(master=self.input, text="Загрузить статью", command=lambda: Thread(target=(self.noemty)).start(), fg_color=self.fg_color, hover_color=self.hover_color)
 
-def folder():
-    e2.delete(0, END)
-    e2.focus()
-    ask_folder = filedialog.askdirectory()
-    folder = StringVar()
-    folder.set(str(ask_folder))    
-    e2.configure(textvariable=folder)
+        self.pb = CTkProgressBar(master=self.input, orientation='horizontal', mode="determinate", progress_color=self.fg_color)
 
-def noemty():
-    if e1.get() == "":
-        error(title)
-    else:
-        l2.configure(text = "")
-        get_page()
+        self.error = CTkLabel(master=self.input, text="asdadad", text_color="#B71C1C")
 
-def error(error_text):
-    l2.configure(text = error_text)
+    def run(self):
+        self.draw_widgets()
+        self.root.mainloop()
+    
+    def nonicon(self):
+        ICON = zlib.decompress(base64.b64decode("eJxjYGAEQgEBBiDJwZDBysAgxsDAoAHEQCEGBQaIOAg4sDIgACMUj4JRMApGwQgF/ykEAFXxQRc="))
+        _, ICON_PATH = tempfile.mkstemp()
+        with open(ICON_PATH, "wb") as icon_file:
+            icon_file.write(ICON)
+        return ICON_PATH
+    
+    def draw_widgets(self):
+        self.top.pack(fill=X, padx=30, pady=(30,0))
+        self.input.pack(fill=X, padx=30)
+        self.setings.pack(fill=X, padx=30, pady=(0,30))
 
-def get_page():
-    if e3.get():
-        autor = e3.get()
-    else:
-        autor = "TIUM"
-    if e4.get():
-        url = e4.get()
-    else:
-        url = "https://github.com/Kolyanchan/Telegraph-Image-Uploader-for-manga"
+        self.name.pack(side=TOP, fill=X, pady=(0,20))
+        self.inputplus.pack(fill=X, pady=(0,20))
+        self.view.pack(side=RIGHT)
+        self.path.pack(side=LEFT, fill=X)
+        self.autor.pack(fill=X, pady=(0,20))
+        self.url_autor.pack(fill=X, pady=(0,20))
+        self.upload.pack()
+        self.pb.pack(pady=(30,0), fill=X)
+        self.pb.set(0)
 
-    dr = str(e2.get())
-    files = []
-    try:
+    def get_page(self):
+        if self.autor.get():
+            autor = self.autor.get()
+        else:
+            autor = "TIUM"
+        if self.url_autor.get():
+            url = self.url_autor.get()
+        else:
+            url = "https://github.com/Kolyanchan/Telegraph-Image-Uploader-for-manga"
+
+        dr = str(self.path.get())
+        files = []
         files += os.listdir(dr)
-    except FileNotFoundError:
-        l2.configure(text = path)
-    to = 0
-    content = " "
-    pb.set(0)
-    pb.configure(determinate_speed=50/len(files))
-    for i in files:
-        a = "<img src="+str(upload_image(str(dr)+'/'+str(i)))+">"
-        content+=a
-        to+=1
-        pb.step()
-        pb.update()
-        response = telegraph.create_page(
-            title = e1.get(),
-            author_name=autor,
-            author_url=url,
-            html_content=content
-        )
-    res = response['url']
-    response = StringVar()
-    response.set(str(res))
-    e1.configure(textvariable=response)
-    exit(res)
+        to = 0
+        content = " "
+        self.pb.set(0)
+        try:
+            self.pb.configure(determinate_speed=50/len(files))
+        except ZeroDivisionError:
+            self.errors(self.file_emty)
+        else:
+            for i in files:
+                a = "<img src="+str(upload_image(str(dr)+'/'+str(i)))+">"
+                content+=a
+                to+=1
+                self.pb.step()
+                self.pb.update()
+                response = self.telegraph.create_page(
+                    title = self.name.get(),
+                    author_name=autor,
+                    author_url=url,
+                    html_content=content
+                )
+            res = response['url']
+            response = StringVar()
+            response.set(str(res))
+            self.name.configure(textvariable=response)
+            self.exit(res)
 
-def exit(resp):    
-    mb.showinfo("","Загрузка окончена")
-    choice = mb.askyesno("ЗАГРУЗКА ЗАКОНЧЕНА", "Перейти на сайт и выйти из приложения?")
-    if choice:
-        webbrowser.open(resp, new=2)
-        app.destroy()
-    
-    
+    def folder(self):
+        self.path.delete(0, END)
+        self.path.focus()
+        ask_folder = filedialog.askdirectory()
+        folder = StringVar()
+        folder.set(str(ask_folder))    
+        self.path.configure(textvariable=folder)
 
-l1 = CTkLabel(master=app, text="Загрузка изображений в статьи telegraph", font=('Century Gothic', 20))
-l1.pack(anchor="n", pady=30)
+    def noemty(self):
+        lock = Lock()
+        if self.name.get() == "":
+            self.errors(self.title)
+            pass
+        elif self.path.get() == '':
+            self.errors(self.file)
+            pass
+        else:
+            try:
+                os.listdir(str(self.path.get()))
+            except FileNotFoundError:
+                self.errors(self.file)
+            else:
+                self.get_page()
 
-frame1 = CTkFrame(master=app)
-frame1.pack(side=TOP, fill=X, padx=30)
-frame1.configure(fg_color="transparent")
+    def errors(self, error_text):
+        self.pb.pack_forget()
+        self.error.configure(text=error_text)
+        self.error.pack(side=TOP, pady=(15,0))
+        self.root.update()
+        time.sleep(3)
+        self.error.pack_forget()
+        self.pb.pack(pady=(30,0), fill=X)
 
-e1 = CTkEntry(master=frame1, width=100, placeholder_text="Название статьи*")
-e1.pack(side=TOP, fill=X, pady=(0,20))
+    def exit(self, resp):    
+        mb.showinfo("","Загрузка окончена")
+        choice = mb.askyesno("ЗАГРУЗКА ЗАКОНЧЕНА", "Перейти на сайт и выйти из приложения?")
+        if choice:
+            webbrowser.open(resp, new=2)
+            self.root.destroy()
 
-frame2 = CTkFrame(master=frame1)
-frame2.pack(side=TOP, pady=(0,20))
-frame2.configure(fg_color="transparent")
 
 
-b1 = CTkButton(master=frame2, text="Обзор", width=70, command=folder, fg_color=(color1, color1), hover_color=(color2, color2) )
-b1.pack(side=RIGHT)
-
-e2 = CTkEntry(master=frame2, width=2000, placeholder_text="Разположение файлов*")
-e2.pack(side=LEFT, fill=X)
-
-frame3 = CTkFrame(master=frame1)
-frame3.pack(side=TOP, pady=(0,20), fill = X)
-frame3.configure(fg_color="transparent")
-
-e3 = CTkEntry(master=frame3, width=100, placeholder_text="Автор")
-e3.pack(side=TOP, fill=X, pady=(0,20))
-
-e4 = CTkEntry(master=frame3, width=100, placeholder_text='Ссылка автора (вид: "http://" или "https://")')
-e4.pack(side=TOP, fill=X, pady=(0,20))
-
-b2 = CTkButton(master=frame1, text="Загрузить статью", command=noemty, fg_color=(color1, color1), hover_color=(color2, color2))
-b2.pack(side=TOP)
-
-pb = CTkProgressBar(master=frame1, orientation='horizontal', mode="determinate", progress_color=(color1, color1))
-pb.pack(side=TOP, pady=(30,0), fill=X)
-pb.set(0)
-
-l2 = CTkLabel(master=app, text="", text_color="#B71C1C")
-l2.pack(side=TOP, pady=(50,0))
-
-title = 'Поле "Название статьи" не может быть пустым'
-path = 'Неверное расположение файлов'
-
-run()
+if __name__ == "__main__":
+    app = App()
+    app.run()
